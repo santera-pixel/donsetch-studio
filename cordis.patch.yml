@@ -1,0 +1,8 @@
+# donsetch-studio bundle patch: inserts the plugin row into the web profile
+# roster. The node half (exports ".") runs in the host process — it owns the
+# donsetch child-process runner, the run ledger, the agent tools and the HTTP
+# bridge. The `dsh.client` declaration in package.json makes the browser half
+# (exports "./client") load in the web GUI, where it renders the studio panel.
+- insert:
+    - id: donsetch-studio
+      name: donsetch-studio

@@ -1,0 +1,65 @@
+{
+  "name": "donsetch-studio",
+  "version": "0.2.0",
+  "description": "donsetch as a harness plugin: keyless web search and fetch with a studio panel that shows every query, every engine, every result, and exactly how long each stage took.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./icon": "./icon.svg",
+    "./locale/en.json": "./locale/en.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "slots"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/**/*.js",
+    "scripts/setup.mjs",
+    "certs/**",
+    "test/**",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "test": "node test/smoke.mjs"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "dondai44423",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dondai44423/donsetch-studio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dondai44423/donsetch-studio/issues"
+  },
+  "homepage": "https://github.com/dondai44423/donsetch-studio#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "donsetch",
+    "search",
+    "fetch",
+    "observability"
+  ]
+}

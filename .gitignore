@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# the runtime is downloaded, never committed (AGPL redistribution + 40 MB)
+bin/
+certs/node-roots.pem
+
+# local tooling (gh cli, download helpers)
+gh-cli/
+gh.zip
+gh-*.mjs
+npm-login*.mjs
+npm-login-status.json
+npm-token.txt
+
+# local test artefacts
+test/.tmp-profile/
+test/*.dump.txt
+*.tgz
+npm-debug.log*
