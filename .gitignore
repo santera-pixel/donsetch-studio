@@ -18,3 +18,5 @@ test/.tmp-profile/
 test/*.dump.txt
 *.tgz
 npm-debug.log*
+
+docs/*.html
