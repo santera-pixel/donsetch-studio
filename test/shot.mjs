@@ -189,7 +189,11 @@ assert.ok(searches.length > 0, 'no search runs in the ledger')
 assert.ok(fetches.length > 0, 'no fetch runs in the ledger')
 
 const searchRun = searches[0]
-const fetchRun = fetches[0]
+// One fetched page makes for a half-empty screenshot, and the fetch view is
+// where the per-page cards live. Show the richest run instead of the newest.
+const fetchRun = fetches
+  .slice()
+  .sort((a, b) => (b.pages?.length ?? 0) - (a.pages?.length ?? 0) || (b.contentChars ?? 0) - (a.contentChars ?? 0))[0]
 
 const sidebarIcon = sidebar
   ? toHtml(React.createElement(sidebar, { size: 18, active: true })).replace(/ style="[^"]*"/, '')
