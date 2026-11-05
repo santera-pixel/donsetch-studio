@@ -7,6 +7,29 @@ engines that produced it, and how many milliseconds each stage took.
 The plugin drives the `donsetch` binary (pinned to v4.10.5) as a child process and reads its
 `--json` output. No keys, no accounts.
 
+![donsetch studio, search run](docs/preview-search.png)
+
+A search: 5 results, 10 engines, one of them ok and nine walled — and the panel says exactly which
+was which, how long each took, and which engine produced each result. The ledger on the left is
+the whole session, failures included.
+
+![donsetch studio, fetch run](docs/preview-fetch.png)
+
+A fetch: two Reddit threads in one process, 6 763 characters taken, the per-page extraction stats
+(chars, words, completeness, language, content kind), and the extracted markdown — with the budget
+truncation called out in the run notes rather than hidden.
+
+Both images are generated from this repository's own renderer
+([`test/shot.mjs`](test/shot.mjs)) against a real recorded ledger — the panel component, the real
+data, no mock-ups. To regenerate:
+
+```sh
+node test/shot.mjs   # writes docs/preview-*.html
+chrome --headless=new --hide-scrollbars --force-device-scale-factor=2 \
+       --window-size=1320,1180 --screenshot=docs/preview-search.png \
+       file:///<abs-path>/docs/preview-search.html
+```
+
 ## What you get
 
 **Tools** (also visible to the model):
