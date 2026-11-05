@@ -1,6 +1,6 @@
 {
   "name": "donsetch-studio",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "donsetch as a harness plugin: keyless web search and fetch with a studio panel that shows every query, every engine, every result, and exactly how long each stage took.",
   "type": "module",
   "main": "lib/index.js",

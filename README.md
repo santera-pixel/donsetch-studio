@@ -112,6 +112,12 @@ ranges are clamped, never trusted, so a hand-edited config can't make the ledger
 
 The panel updates over server-sent events, so a run started by the agent shows up without a reload.
 
+Every bridge route, reads included, answers only same-origin callers: a request carrying a foreign
+`Origin`, an opaque `null` origin from a sandboxed frame, or `Sec-Fetch-Site: cross-site` gets a 403.
+Requests with no `Origin` header (curl, the panel's own fetch) are what a same-origin caller looks
+like, so they keep working. The ledger holds your queries, URLs and page text, and `GET` should not
+be the word for "public".
+
 ## Tests
 
 ```

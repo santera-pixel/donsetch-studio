@@ -205,6 +205,27 @@ assert.equal(stateBody.value.storage.contentCap, 0)
 assert.equal(typeof stateBody.value.storage.bytes, 'number')
 step(`GET /state: ${stateBody.value.runs.length} run(s), keeps ${stateBody.value.storage.maxRuns} runs, binary=${stateBody.value.binary.path}`)
 
+// Reads are guarded like writes: /state and /run answer the panel, not a page
+// from somewhere else that happens to resolve to this host.
+const knownRun = stateBody.value.runs[0].id
+
+async function readStatus(url, headers = {}) {
+  const res = fakeRes()
+  await handler(fakeReq({ url, headers }), res)
+  return res
+}
+
+assert.equal((await readStatus('/api/donsetch-studio/state', { origin: 'http://127.0.0.1:64329' })).statusCode, 200, 'the panel origin must still read /state')
+assert.equal((await readStatus(`/api/donsetch-studio/run?id=${encodeURIComponent(knownRun)}`)).statusCode, 200, 'a header-less caller (curl) must still read /run')
+step('GET allow: panel origin and header-less caller both read')
+
+assert.equal((await readStatus('/api/donsetch-studio/state', { origin: 'http://evil.example' })).statusCode, 403, 'a foreign origin read /state')
+assert.equal((await readStatus(`/api/donsetch-studio/run?id=${encodeURIComponent(knownRun)}`, { origin: 'http://evil.example' })).statusCode, 403, 'a foreign origin read /run')
+assert.equal((await readStatus('/api/donsetch-studio/state', { origin: 'null' })).statusCode, 403, 'an opaque origin read /state')
+assert.equal((await readStatus('/api/donsetch-studio/state', { 'sec-fetch-site': 'cross-site' })).statusCode, 403, 'a cross-site fetch read /state')
+assert.equal((await readStatus('/api/donsetch-studio/events', { origin: 'http://evil.example' })).statusCode, 403, 'a foreign origin opened the event stream')
+step('GET deny: foreign origin, opaque origin and Sec-Fetch-Site cross-site all 403')
+
 // POST /probe
 const probeRes = fakeRes()
 await handler(fakeReq({
