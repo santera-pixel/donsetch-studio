@@ -122,7 +122,7 @@ async function loadState() {
 }
 
 const live = await loadState()
-assert.ok(Array.isArray(live.runs) && live.runs.length > 0, 'the ledger is empty â€” run a search or a fetch first')
+assert.ok(Array.isArray(live.runs) && live.runs.length > 0, 'the ledger is empty — run a search or a fetch first')
 
 let served = live
 globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ ok: true, value: served }) })
