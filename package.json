@@ -38,15 +38,15 @@
     "test": "node test/smoke.mjs"
   },
   "license": "AGPL-3.0-only",
-  "author": "dondai44423",
+  "author": "santera-pixel",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dondai44423/donsetch-studio.git"
+    "url": "git+https://github.com/santera-pixel/donsetch-studio.git"
   },
   "bugs": {
-    "url": "https://github.com/dondai44423/donsetch-studio/issues"
+    "url": "https://github.com/santera-pixel/donsetch-studio/issues"
   },
-  "homepage": "https://github.com/dondai44423/donsetch-studio#readme",
+  "homepage": "https://github.com/santera-pixel/donsetch-studio#readme",
   "publishConfig": {
     "access": "public"
   },

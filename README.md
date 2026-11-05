@@ -65,11 +65,11 @@ installs from a git spec — the same `github:` form the plugin hub records for 
 on npm (check any profile: `graph-memory` → `github:adoresever/graph-memory`):
 
 ```sh
-dsh plugin --profile <profile> add github:dondai44423/donsetch-studio
+dsh plugin --profile <profile> add github:santera-pixel/donsetch-studio
 ```
 
 Or in the app: **Settings → Plugins → install by spec**, paste
-`github:dondai44423/donsetch-studio`. To pick up later commits, run the same command with `update`.
+`github:santera-pixel/donsetch-studio`. To pick up later commits, run the same command with `update`.
 
 Nothing is built and nothing is bundled — the checkout is plain ESM, so `pnpm` cloning the
 repository is the whole installation.
@@ -152,11 +152,24 @@ node test/smoke.mjs --offline
 node test/render.mjs       # renders the panel against the live /state bridge
 node test/render.mjs --dump  # …and prints the text it painted
 node test/field-audit.mjs  # which fields the panel reads from the payload
+node test/shot.mjs         # writes docs/preview-*.html from the live ledger, for the screenshots
 ```
 
 `smoke.mjs` drives the prefix handler with fake `IncomingMessage`/`ServerResponse` objects, so it
 covers routing, the origin guard, validation and a real run without starting the harness. It needs
 `DONSETCH_BIN` or a downloaded runtime, exactly like the plugin.
+
+## Credits
+
+- **[donsetch](https://github.com/dondai44423/donsetch)** by [@dondai44423](https://github.com/dondai44423)
+  — the search and fetch engine this plugin drives. All of the retrieval, extraction and ranking is
+  upstream's; this project adds no scraping of its own and reimplements none of it.
+- The panel speaks the binary's own vocabulary unchanged — engines, stages, escalation tiers,
+  `content.extract` — so a run reads the same here as it does in donsetch's `--json` output.
+- What this project adds: the harness integration (bundle, tools, per-profile install), a run ledger
+  that survives restarts, the studio panel with per-engine and per-stage timings, the pinned
+  runtime download with SHA-256 verification, and the `SSL_CERT_FILE` workaround for hosts without
+  an OS trust store.
 
 ## Licence
 
