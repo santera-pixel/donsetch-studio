@@ -21,3 +21,6 @@ test/*.dump.txt
 npm-debug.log*
 
 docs/*.html
+
+# leftover metadata from a damaged repo
+.git.broken-*/

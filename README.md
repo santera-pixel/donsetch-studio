@@ -1,178 +1,108 @@
 # donsetch studio
 
-[DonSeTch](https://github.com/dondai44423/donsetch) as a harness plugin, with a panel that shows
-what actually happened: every query, every engine that answered or refused, every result with the
-engines that produced it, and how many milliseconds each stage took.
+[donsetch](https://github.com/dondai44423/donsetch) as a DeepSeek Harness plugin, with a panel that
+shows what actually happened during a run: which engines answered, which were blocked, what each
+page gave you, and how long every step took.
 
-The plugin drives the `donsetch` binary (pinned to v4.10.5) as a child process and reads its
-`--json` output. No keys, no accounts.
+A list of results on its own doesn't tell you much. When a query comes back thin, you want to know
+whether the other engines were blocked, slow, or just had nothing. That's what the panel is for.
 
-![donsetch studio, search run](docs/preview-search.png)
-
-A search: 5 results, 10 engines, one of them ok and nine walled — and the panel says exactly which
-was which, how long each took, and which engine produced each result. The ledger on the left is
-the whole session, failures included.
-
-![donsetch studio, fetch run](docs/preview-fetch.png)
-
-A fetch: two Reddit threads in one process, 6 763 characters taken, the per-page extraction stats
-(chars, words, completeness, language, content kind), and the extracted markdown — with the budget
-truncation called out in the run notes rather than hidden.
-
-Both images are generated from this repository's own renderer
-([`test/shot.mjs`](test/shot.mjs)) against a real recorded ledger — the panel component, the real
-data, no mock-ups. To regenerate:
-
-```sh
-node test/shot.mjs   # writes docs/preview-*.html
-chrome --headless=new --hide-scrollbars --force-device-scale-factor=2 \
-       --window-size=1320,1180 --screenshot=docs/preview-search.png \
-       file:///<abs-path>/docs/preview-search.html
-```
-
-## What you get
-
-**Tools** (also visible to the model):
+## Tools
 
 | tool | what it does |
 | --- | --- |
-| `donsetch_search` | keyless web/code/paper/news search, returns ranked results with engine provenance |
-| `donsetch_fetch` | fetch up to 12 URLs and return the extracted markdown (6 000 chars per page in the tool result, full text in the panel); `mode` scan/read/deep, `tier` auto/1/2, `toc`, `links`, `maxChars` |
-| `donsetch_engines` | per-engine health from the run ledger (ok / empty / blocked / failed, average ms) |
+| `donsetch_search` | search the web, code, papers or news without an API key. Returns results with the engines that produced each one. |
+| `donsetch_fetch` | fetch up to 12 URLs as markdown. Options for mode, tier, table of contents, links, and how much text to keep. |
+| `donsetch_engines` | how each engine has been behaving across the runs recorded so far. |
 
-**Panel**: a full-width view in the main panel plus a sidebar icon. Left column is the run ledger
-(newest first, live elapsed time while a run is in flight); right column is the selected run.
+## The panel
 
-- **Search detail**: run time vs. internal `meta.elapsed_ms`, per-engine timing bars (wall time per
-  engine, coloured by status), result count, how many engines were blocked or failed, the
-  corroboration count behind each result, the post-processing stages from `meta.stage_ms`
-  (`enrich`, `filters`, `topup`), and the raw markdown the tool returned.
-- **Fetch detail**: one card per page with characters, words, whether the extraction was complete,
-  language/script/content kind, HTTP status, the escalation trail (`route` / `tier` / `outcome`),
-  and the extracted markdown.
-- **Composer**: run a search or a fetch straight from the panel, using the same code path as the
-  tools.
+![a search run in the panel](docs/preview-search.png)
 
-Timings are measured on the host (`process.hrtime.bigint()` around the child process), so they
-include process start-up — that is the number a caller actually waits for. The internal number the
-binary reports is shown next to it so the overhead is visible.
+Pick a run on the left and read it on the right. For searches that means the wall time next to the
+binary's own `meta.elapsed_ms`, a bar per engine coloured by status, how many results came back and
+how many engines were blocked, the enrichment and top-up stages, and the markdown the tool returned.
+
+![a fetch run in the panel](docs/preview-fetch.png)
+
+For fetches you get one card per page: characters and words, whether the extraction was complete,
+language and content kind, the HTTP status, the escalation trail from plain HTTP up to the headless
+browser, and the markdown that came out.
+
+You can also start a search or a fetch from the panel. It goes through the same code as the tools.
+
+Timings are measured around the child process with `process.hrtime.bigint()`, so they include
+startup. That's the number a caller actually waits for. The binary's internal number sits next to
+it, and the gap between the two is part of the point.
 
 ## Install
 
-The package is a bundle (`dsh.bundle.patch`): installing it adds the dependency and activates the
-row `donsetch-studio` in the profile's `cordis.patch.yml`. This repository *is* the package, so it
-installs from a git spec — the same `github:` form the plugin hub records for bundles that are not
-on npm (check any profile: `graph-memory` → `github:adoresever/graph-memory`):
+The package is a bundle, so installing it adds the dependency and turns on `donsetch-studio` in the
+profile's `cordis.patch.yml`.
 
 ```sh
 dsh plugin --profile <profile> add github:santera-pixel/donsetch-studio
 ```
 
-Or in the app: **Settings → Plugins → install by spec**, paste
-`github:santera-pixel/donsetch-studio`. To pick up later commits, run the same command with `update`.
+In the app, open Settings → Plugins and paste `github:santera-pixel/donsetch-studio`. Running the
+same command with `update` picks up new commits.
 
-Nothing is built and nothing is bundled — the checkout is plain ESM, so `pnpm` cloning the
-repository is the whole installation.
+There's nothing to build. The checkout is plain ESM, so pnpm cloning it is the whole install.
 
-### The runtime is downloaded on first use
+### The binary arrives on first use
 
-The npm package carries no binary. On first use the plugin downloads the pinned upstream release
-for the host platform (`donsetch-win32-x64.tar.gz` and friends), verifies it against the `.sha256`
-published next to it, and caches it in:
+No binary is committed here. On first use the plugin downloads the pinned upstream release for your
+platform, checks it against the `.sha256` published next to it, and unpacks it into
+`~/.dsh/.donsetch-studio/runtime/4.10.5/bin/`. That's about 17 MB, once per machine. The first run
+that pays for it carries a `setup` note in the panel, so the cost isn't a mystery.
 
-```
-~/.dsh/.donsetch-studio/runtime/4.10.5/bin/donsetch.exe
-```
-
-That is one ~17 MB download per machine (not per profile, not per install), and it is recorded in
-the run ledger as a `setup` chip. To pay the cost up front instead of inside the first search:
+If you'd rather not have that happen in the middle of a search:
 
 ```sh
 node node_modules/donsetch-studio/scripts/setup.mjs
 ```
 
-Set `DONSETCH_BIN` to skip the download entirely and use an existing `donsetch` executable.
+Or point `DONSETCH_BIN` at a donsetch you already have.
 
-## Verified
+### Certificates
 
-- cold install from `npm pack` with an empty runtime cache → probe downloads 17 587 446 bytes,
-  checksum `43787624…9a7df8` matches, extracts `donsetch.exe` + `onnxruntime.dll` + `pdfium.dll`
-  into `bin/`, writes the CA bundle, `DonSeTch 4.10.5` answers
-- probe → `DonSeTch 4.10.5`
-- search from the panel (`POST /run`) → 202, then `status: ok`, 9.9 s wall / 9.7 s internal, 10
-  engines (bing ok 500 ms, yahoo ok 889 ms, ddg ok 896 ms, google/mojeek/brave blocked), 4 results
-- search from the tool → recorded with `source: agent`, `tool: donsetch_search`, 9.5 s, 3 results
-- fetch `https://www.rust-lang.org/` → 2 835 chars, 422 words, `complete: true`, `lang: en`
-- fetch that donsetch cannot extract (`doc.rust-lang.org`, `content.extract`) → the failure, the
-  escalation trail and `next_action` all reach the panel
-- `donsetch_engines` → per-engine health across the recorded searches
+donsetch brings its own TLS stack, and when it can't find an OS certificate store it stops with
+`tls: no root certs loaded`. That turns up in sandboxes and containers more often than you'd expect.
+The plugin writes Node's own roots to `node-roots.pem` in the runtime cache and passes it to the
+child through `SSL_CERT_FILE`, so it works without changing anything on the host.
 
-## Data
+## Where the runs go
 
-Runs are persisted to `runs.json`, capped at the 200 most recent runs: under
-`<DSH_PROFILE_DIR>/.donsetch-studio/` when the host exports that variable, otherwise under
-`<DSH_HOME>/.donsetch-studio/`, otherwise `~/.dsh/.donsetch-studio/`. On the machine this was built
-on the desktop shell exports the three `DSH_*` path variables as empty strings, so the live ledger
-is `C:\Users\Santera\.dsh\.donsetch-studio\runs.json`; `GET /api/donsetch-studio/state` reports the
-resolved path as `ledgerPath`. The ledger survives harness restarts; a run that was in flight when
-the host stopped is marked as interrupted on load.
+Runs are saved to `runs.json`, capped at the 200 most recent, in `<DSH_PROFILE_DIR>/.donsetch-studio/`
+when the host sets that, otherwise `<DSH_HOME>/.donsetch-studio/`, otherwise
+`~/.dsh/.donsetch-studio/`. The desktop shell exports those variables empty, so on a normal install
+it lands in `~/.dsh/.donsetch-studio/runs.json`. `GET /api/donsetch-studio/state` reports the
+resolved path as `ledgerPath`. A run that was still in flight when the harness stopped comes back as
+interrupted instead of pretending it finished.
 
-## Environment
-
-| variable | effect |
-| --- | --- |
-| `DONSETCH_BIN` | use this `donsetch` executable instead of downloading one |
-| `DONSETCH_STUDIO_HOME` | cache root for the runtime (default `~/.dsh/.donsetch-studio/runtime`) |
-| `SSL_CERT_FILE` | respected by the child as usual; when unset the plugin points it at a generated PEM of Node's trust store |
-
-That last part matters: donsetch builds its own TLS context and fails closed with
-`tls: no root certs loaded` when `rustls-native-certs` cannot see an OS store (common in sandboxes
-and containers). The plugin writes Node's own roots to `node-roots.pem` in the runtime cache and
-points `SSL_CERT_FILE` at it, so searches work without touching the host.
-
-## HTTP bridge
-
-The panel talks to the host over same-origin JSON, with SSE for revisions:
-
-- `GET  /api/donsetch-studio/state?limit=N` — probe state, stats, runtime state, runs (content clipped)
-- `GET  /api/donsetch-studio/run?id=…` — one run
-- `POST /api/donsetch-studio/run` — start a search or fetch (202, fire and forget)
-- `POST /api/donsetch-studio/probe` — re-run `donsetch --version`
-- `POST /api/donsetch-studio/clear` — empty the ledger
-- `GET  /api/donsetch-studio/events` — SSE `hello` / `revision` frames
-
-Writes are rejected for cross-origin callers (`sec-fetch-site: cross-site`, or a mismatched
-`Origin`).
+The panel updates over server-sent events, so a run started by the agent shows up without a reload.
 
 ## Tests
 
 ```
-node test/smoke.mjs        # real search + fetch, then the whole host half on a fake ctx
-node test/smoke.mjs --offline
-node test/render.mjs       # renders the panel against the live /state bridge
-node test/render.mjs --dump  # …and prints the text it painted
-node test/field-audit.mjs  # which fields the panel reads from the payload
-node test/shot.mjs         # writes docs/preview-*.html from the live ledger, for the screenshots
+node test/smoke.mjs        # real search and fetch, then the host half on a fake ctx
+node test/render.mjs       # renders the panel from the live /state bridge
+node test/shot.mjs         # writes docs/preview-*.html for the screenshots above
 ```
 
-`smoke.mjs` drives the prefix handler with fake `IncomingMessage`/`ServerResponse` objects, so it
-covers routing, the origin guard, validation and a real run without starting the harness. It needs
-`DONSETCH_BIN` or a downloaded runtime, exactly like the plugin.
+`smoke.mjs` needs a donsetch binary, from `DONSETCH_BIN` or the cache, same as the plugin. The other
+two run on their own but are more useful once there are some runs to look at.
 
 ## Credits
 
-- **[donsetch](https://github.com/dondai44423/donsetch)** by [@dondai44423](https://github.com/dondai44423)
-  — the search and fetch engine this plugin drives. All of the retrieval, extraction and ranking is
-  upstream's; this project adds no scraping of its own and reimplements none of it.
-- The panel speaks the binary's own vocabulary unchanged — engines, stages, escalation tiers,
-  `content.extract` — so a run reads the same here as it does in donsetch's `--json` output.
-- What this project adds: the harness integration (bundle, tools, per-profile install), a run ledger
-  that survives restarts, the studio panel with per-engine and per-stage timings, the pinned
-  runtime download with SHA-256 verification, and the `SSL_CERT_FILE` workaround for hosts without
-  an OS trust store.
+The search and fetch engine is [donsetch](https://github.com/dondai44423/donsetch) by
+[@dondai44423](https://github.com/dondai44423). The retrieval, extraction and ranking are all
+theirs. This plugin adds the harness integration, the ledger, the panel, the pinned runtime download
+and the certificate workaround. The panel uses the binary's own vocabulary for engines, stages,
+escalation tiers and `content.extract`, so a run reads the same here as it does in donsetch's JSON.
 
 ## Licence
 
-The plugin code is AGPL-3.0-only. The `donsetch` runtime is downloaded from
-[dondai44423/donsetch](https://github.com/dondai44423/donsetch) at install/first-use time and stays
-under the upstream AGPL-3.0 licence; nothing of it is redistributed in this package.
+The plugin code is AGPL-3.0-only. donsetch itself is downloaded at first use from the upstream
+releases and stays under its own AGPL-3.0 licence. Nothing of it is redistributed in this
+repository.
