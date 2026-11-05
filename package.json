@@ -35,7 +35,7 @@
   ],
   "scripts": {
     "setup": "node scripts/setup.mjs",
-    "test": "node test/smoke.mjs"
+    "test": "node test/runtime.mjs && node test/smoke.mjs"
   },
   "license": "AGPL-3.0-only",
   "author": "santera-pixel",

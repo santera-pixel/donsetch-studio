@@ -52,9 +52,16 @@ There's nothing to build. The checkout is plain ESM, so pnpm cloning it is the w
 ### The binary arrives on first use
 
 No binary is committed here. On first use the plugin downloads the pinned upstream release for your
-platform, checks it against the `.sha256` published next to it, and unpacks it into
+platform, checks it against a SHA-256 that is written into this repository, and unpacks it into
 `~/.dsh/.donsetch-studio/runtime/4.10.5/bin/`. That's about 17 MB, once per machine. The first run
 that pays for it carries a `setup` note in the panel, so the cost isn't a mystery.
+
+The release also publishes a `.sha256` next to each asset, and the installer reads it as a second
+opinion. It isn't trusted on its own: that file lives in the same release as the archive, so whoever
+could replace one could replace both. If the published digest ever disagrees with the pinned one, the
+install stops and says so rather than quietly accepting whichever version answered. Targets without a
+pinned digest (Linux, macOS) still install, and the marker records them as `checksumSource:
+"release"` so it's clear which trust model applied.
 
 If you'd rather not have that happen in the middle of a search:
 
@@ -85,13 +92,14 @@ The panel updates over server-sent events, so a run started by the agent shows u
 ## Tests
 
 ```
+node test/runtime.mjs      # pinned digests, target lookup, tampered archive rejection
 node test/smoke.mjs        # real search and fetch, then the host half on a fake ctx
 node test/render.mjs       # renders the panel from the live /state bridge
 node test/shot.mjs         # writes docs/preview-*.html for the screenshots above
 ```
 
 `smoke.mjs` needs a donsetch binary, from `DONSETCH_BIN` or the cache, same as the plugin. The other
-two run on their own but are more useful once there are some runs to look at.
+three run on their own but are more useful once there are some runs to look at.
 
 ## Credits
 
