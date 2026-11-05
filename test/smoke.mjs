@@ -170,7 +170,7 @@ const ctx = {
   },
 }
 
-host.apply(ctx)
+host.apply(ctx, { maxRuns: 120, contentCap: 0 })
 
 step(`wiring: ${record.tools.length} tool(s), ${record.routes.length} route(s), ${record.sections.length} prompt section(s), effects=${record.effects.join('|')}`)
 assert.deepEqual(record.tools.map((tool) => tool.name).sort(), ['donsetch_engines', 'donsetch_fetch', 'donsetch_search'])
@@ -198,7 +198,12 @@ assert.equal(stateBody.ok, true)
 assert.equal(stateBody.value.panelId, 'donsetch-studio')
 assert.ok(Array.isArray(stateBody.value.runs))
 assert.ok(stateBody.value.stats !== undefined)
-step(`GET /state: ${stateBody.value.runs.length} run(s), binary=${stateBody.value.binary.path}`)
+// The mount above passed maxRuns/contentCap, so the bridge must report those
+// values, not the defaults: that is the whole path from patch row to ledger.
+assert.equal(stateBody.value.storage.maxRuns, 120, 'config did not reach the ledger')
+assert.equal(stateBody.value.storage.contentCap, 0)
+assert.equal(typeof stateBody.value.storage.bytes, 'number')
+step(`GET /state: ${stateBody.value.runs.length} run(s), keeps ${stateBody.value.storage.maxRuns} runs, binary=${stateBody.value.binary.path}`)
 
 // POST /probe
 const probeRes = fakeRes()

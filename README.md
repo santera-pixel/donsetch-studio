@@ -89,8 +89,26 @@ Runs are saved to `runs.json`, capped at the 200 most recent, in `<DSH_PROFILE_D
 when the host sets that, otherwise `<DSH_HOME>/.donsetch-studio/`, otherwise
 `~/.dsh/.donsetch-studio/`. The desktop shell exports those variables empty, so on a normal install
 it lands in `~/.dsh/.donsetch-studio/runs.json`. `GET /api/donsetch-studio/state` reports the
-resolved path as `ledgerPath`. A run that was still in flight when the harness stopped comes back as
-interrupted instead of pretending it finished.
+resolved path as `ledgerPath`, the size on disk, and the two retention settings below. A run that was
+still in flight when the harness stopped comes back as interrupted instead of pretending it finished.
+
+Each run stores its query, per-engine status and latency, the results with their scores, the
+extraction stats of every page, and up to `contentCap` characters of the extracted markdown. The
+panel's header says which of those apply, because a trace you can't audit the size of is a trace you
+can't trust with a long crawl.
+
+Two optional settings go in the patch row, next to the module name:
+
+```yaml
+donsetch-studio:
+  maxRuns: 200      # runs kept on disk, 20–1000
+  contentCap: 20000 # characters of page text per run, 1000–200000
+  # contentCap: 0   # keep every timing and count, store no page text at all
+```
+
+`contentCap: 0` is a real setting rather than a floor: the ledger keeps what the engine panel needs
+(engines, latencies, result counts, extraction stats) and drops the markdown. Values outside the
+ranges are clamped, never trusted, so a hand-edited config can't make the ledger unbounded.
 
 The panel updates over server-sent events, so a run started by the agent shows up without a reload.
 
@@ -98,6 +116,7 @@ The panel updates over server-sent events, so a run started by the agent shows u
 
 ```
 node test/runtime.mjs      # pinned digests, target lookup, tampered archive rejection
+node test/ledger.mjs       # retention knobs, clamping, contentCap 0
 node test/smoke.mjs        # real search and fetch, then the host half on a fake ctx
 node test/render.mjs       # renders the panel from the live /state bridge
 node test/shot.mjs         # writes docs/preview-*.html for the screenshots above

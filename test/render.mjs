@@ -213,6 +213,12 @@ if (searches.length > 0) {
   }
   assert.ok(searchView.text.includes(run.label), 'the query is missing from the detail header')
   assert.ok(searchView.text.includes('donsetch studio'), 'the header is missing')
+  // The header has to say what the ledger keeps: a trace of web traffic invites
+  // exactly that question, and the answer is a config value, not a guess.
+  assert.ok(live.storage !== undefined, 'the bridge does not report ledger storage')
+  assert.match(searchView.text, new RegExp(`keeps the last ${live.storage.maxRuns} runs?`), 'the header does not state the run cap')
+  const cap = live.storage.contentCap === 0 ? 'no page text' : `page text up to ${live.storage.contentCap.toLocaleString('en-US')} chars`
+  assert.ok(searchView.text.includes(cap), `the header does not state the content cap: ${cap}`)
 }
 
 // Empty ledger → the empty state must still paint.
