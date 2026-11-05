@@ -9,7 +9,7 @@
  */
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { assetName, describeRuntime, pinnedDigest, RUNTIME_VERSION, verifyArchiveDigest } from '../lib/runtime.js'
+import { assetName, describeRuntime, pinnedDigest, RUNTIME_VERSION, targetKey, verifyArchiveDigest } from '../lib/runtime.js'
 
 let failures = 0
 
@@ -66,7 +66,20 @@ check('unpinned releases are visible as unpinned rather than silently trusted', 
 check('asset lookup maps supported targets and reports the rest as absent', () => {
   assert.equal(assetName('win32', 'x64'), 'donsetch-win32-x64.tar.gz')
   assert.equal(assetName('linux', 'arm64'), 'donsetch-linux-arm64.tar.gz')
+  assert.equal(assetName('darwin', 'arm64'), 'donsetch-darwin-arm64.tar.gz')
+  assert.equal(assetName('win32', 'ia32'), undefined)
   assert.equal(assetName('plan9', 'mips'), undefined)
+})
+
+check('Windows on ARM runs the x64 archive instead of refusing', () => {
+  assert.equal(targetKey('win32', 'arm64'), 'win32-x64')
+  assert.equal(assetName('win32', 'arm64'), 'donsetch-win32-x64.tar.gz')
+  assert.equal(targetKey('win32', 'x64'), 'win32-x64')
+  assert.equal(targetKey('linux', 'arm64'), 'linux-arm64')
+})
+
+check('the ARM64 alias inherits the pinned digest of the archive it runs', () => {
+  assert.equal(pinnedDigest('4.10.5', targetKey('win32', 'arm64')), pinnedDigest('4.10.5', 'win32-x64'))
 })
 
 check('describeRuntime reports this host as pinned and supported', () => {
@@ -75,6 +88,7 @@ check('describeRuntime reports this host as pinned and supported', () => {
   assert.equal(described.supported, true)
   assert.equal(described.pinned, true)
   assert.equal(described.asset, 'donsetch-win32-x64.tar.gz')
+  assert.equal(described.emulated, false, 'an x64 host is not emulating anything')
 })
 
 if (failures > 0) {

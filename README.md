@@ -63,6 +63,11 @@ install stops and says so rather than quietly accepting whichever version answer
 pinned digest (Linux, macOS) still install, and the marker records them as `checksumSource:
 "release"` so it's clear which trust model applied.
 
+Windows on ARM is covered by emulation rather than a native build, because upstream doesn't publish
+one. A native ARM64 Node gets the x64 archive, which Windows 11 runs transparently; everything else
+about that target, including the pinned digest, is the x64 target. Set `DONSETCH_BIN` instead if you
+keep a native donsetch around.
+
 If you'd rather not have that happen in the middle of a search:
 
 ```sh
